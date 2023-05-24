@@ -1,0 +1,26 @@
+name: deploy blog
+
+on:
+  push:
+    branches:
+      - master # default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build and Deploy
+      - run: yarn install
+      - run: yarn deploy
+
+      - name: Deploy
+        uses: easingthemes/ssh-deploy@master
+        with:
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            remote-username: ${{ secrets.BLOGUSER }}
+            server-ip: ${{ secrets.BLOGIP }}
+            local-path: ./public/
+            remote-path: /data/monto-blog/public
