@@ -18,8 +18,8 @@ jobs:
       - name: Deploy
         uses: easingthemes/ssh-deploy@main
         with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-            remote-username: ${{ secrets.BLOGUSER }}
-            server-ip: ${{ secrets.BLOGIP }}
-            local-path: ./public/
-            remote-path: /data/monto-blog/public
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            REMOTE_USER: ${{ secrets.BLOGUSER }}
+            REMOTE_HOST: ${{ secrets.BLOGIP }}
+            SOURCE: ./public/
+            TARGET: /data/monto-blog/public
