@@ -4,7 +4,27 @@ https://github.com/cofess/hexo-theme-pure/blob/master/README.cn.md
 
 ## 开发
 
-(待研究)
+1. 安装依赖
+
+yarn
+
+2. 新建文章
+
+npx hexo new page `文章名`
+
+3. 文章抬头示例
+
+```md
+---
+title: 如何给Hexo博客配置自动部署到服务器
+date: 2023-05-24 20:57:30
+categories:
+  - Hexo
+tags:
+  - Hexo
+toc: true
+---
+```
 
 ## 部署
 

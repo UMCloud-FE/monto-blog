@@ -1,5 +1,6 @@
 ---
 title: 如何写文章和发布文章
+date: 2023-01-24 20:57:30
 categories:
   - Hexo
 tags:
