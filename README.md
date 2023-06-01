@@ -10,7 +10,8 @@ yarn
 
 2. 新建文章
 
-npx hexo new page `文章名`
+ - npx hexo new page "目录名"    
+ - npx hexo new post "文章名"    
 
 3. 文章抬头示例
 
@@ -28,6 +29,8 @@ toc: true
 
 ## 部署
 
+### 手动
+
 > node > 16.14.0
 
 - 登入服务器：
@@ -39,3 +42,7 @@ toc: true
 - yarn
 - npx hexo generate (可能会有缓存问题)
 - 重启nginx：nginx -s reload
+
+### 自动
+
+目前已实现 Github Action 自动部署，只需要将代码推送到 master 分支即可。

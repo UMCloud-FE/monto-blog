@@ -74,16 +74,16 @@ total:
   category: Total %d categories
   link: Total %d links
   repository: Total %d projects
-donate:
-  qrcode_alt: Scan Qrcode
-  qrcode_title: Scan
-  button: $
-  title: Maybe you could buy me a cup of coffee.
-  tip: Scan this qrcode
-  alipay_action_tip: Open alipay app scan this qrcode, buy me a coffee!
-  wechatpay_action_tip: Open wechat app scan this qrcode, buy me a coffee!
-  alipay: alipay
-  wechatpay: wechat payment
+# donate:
+#   qrcode_alt: Scan Qrcode
+#   qrcode_title: Scan
+#   button: $
+#   title: Maybe you could buy me a cup of coffee.
+#   tip: Scan this qrcode
+#   alipay_action_tip: Open alipay app scan this qrcode, buy me a coffee!
+#   wechatpay_action_tip: Open wechat app scan this qrcode, buy me a coffee!
+#   alipay: alipay
+#   wechatpay: wechat payment
 comment: Comment
 tweets: Tweets
 share: Share
