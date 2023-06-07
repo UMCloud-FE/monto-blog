@@ -1,7 +1,10 @@
 ---
 title: 如何给Hexo博客配置自动部署到服务器
 date: 2023-05-24 20:57:30
-tags: Hexo
+categories:
+  - 运维
+tags:
+  - 部署服务
 toc: true
 ---
 

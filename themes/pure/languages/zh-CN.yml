@@ -74,16 +74,16 @@ total:
   category: 共 %d 个分类
   link: 共 %d 个友情链接
   repository: 共 %d 个项目
-donate:
-  qrcode_alt: 扫码支持
-  qrcode_title: 扫一扫
-  button: 赏
-  title: 感谢您的支持，我会继续努力的!
-  tip: 扫码打赏，你说多少就多少
-  alipay_action_tip: 打开支付宝扫一扫，即可进行扫码打赏哦
-  wechatpay_action_tip: 打开微信扫一扫，即可进行扫码打赏哦
-  alipay: 支付宝
-  wechatpay: 微信支付
+# donate:
+#   qrcode_alt: 扫码支持
+#   qrcode_title: 扫一扫
+#   button: 赏
+#   title: 感谢您的支持，我会继续努力的!
+#   tip: 扫码打赏，你说多少就多少
+#   alipay_action_tip: 打开支付宝扫一扫，即可进行扫码打赏哦
+#   wechatpay_action_tip: 打开微信扫一扫，即可进行扫码打赏哦
+#   alipay: 支付宝
+#   wechatpay: 微信支付
 comment: 评论
 tweets: 推文
 share: Share
