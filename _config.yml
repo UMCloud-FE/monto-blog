@@ -94,6 +94,12 @@ include:
 exclude:
 ignore:
 
+footer:
+  beian:
+    enable: true
+    icp_text: 豫ICP备2021029374号
+    police_code: https://beian.miit.gov.cn
+
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
