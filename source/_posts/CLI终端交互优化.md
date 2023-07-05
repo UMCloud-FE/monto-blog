@@ -3,6 +3,8 @@ layout: post
 title: CLI终端交互优化
 date: 2023-06-30 18:53:52
 tags: CLI
+categories:
+  - CLI
 ---
 
 # 三、终端交互优化

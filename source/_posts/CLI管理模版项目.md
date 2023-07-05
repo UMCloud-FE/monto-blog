@@ -3,6 +3,8 @@ layout: post
 title: CLI管理模版项目
 date: 2023-06-30 18:54:31
 tags: CLI
+categories:
+  - CLI
 ---
 
 # 五、CLI管理模版项目

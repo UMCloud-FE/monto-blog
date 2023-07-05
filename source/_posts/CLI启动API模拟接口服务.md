@@ -3,6 +3,8 @@ layout: post
 title: CLI启动API模拟接口服务
 date: 2023-06-30 18:55:28
 tags: CLI
+categories:
+  - CLI
 ---
 
 # 六、通过CLI启动API模拟接口服务
