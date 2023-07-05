@@ -1,105 +1,74 @@
 ---
 layout: post
-title: 认识CLI
+title: 一、认识CLI
 date: 2023-06-30 18:49:32
 tags: CLI
+categories:
+  - CLI
 ---
 
-# 一、CLI有啥用，认识CLI
+## 一、初识CLI
 
-前端开发过程中常见的CLI有：
+> 官方说法：CLI（命令行界面）是一种计算机用户界面，允许用户通过键盘输入命令来与计算机进行交互。
+
+对我们来说，CLI就是命令行交互工具，通过接收用户输入命令和参数来执行对应的操作。
+
+Windows系统：点击"开始"按钮，搜索并打开"命令提示符"或"PowerShell"。
+macOS系统：打开"应用程序"文件夹，进入"实用工具"并打开"终端"。
+
+一个简单的例子，平时打开删除文件`index.html`，需要以下步骤：
+- 1、找到文件
+- 2、点击右键，选择删除
+- 3、点击确定
+
+通过计算机的CLI我们可以直接`rm -rf ./index.html`，文件就被删除了。
+
+TODO: 展示图，指令操作
+
+当然我们介绍的CLI，是通过调用`node`的能力，来实现各种计算机操作，例如：
+
+- npm
 - create-react-app 
 - vue-cli 
 - webpack-cli
 - prettier-cli
 
-基本复杂一点的工具都在集成CLI，为啥都要搞成CLI呢？
+ TODO: 截图展示
 
-因为CLI可以提供更强大的功能:
+## 二、CLI的工作原理和构成
 
-- 通过命令搭配实现不同的功能
+> CLI的工作原理很简单，就是用户输入一个命令，计算机执行该命令，并返回相应的执行结果或操作。
+> CLI的基本结构：CLI界面通常由一个命令提示符和一个光标组成。命令提示符显示当前用户和计算机的信息，光标表示输入位置。
+
+命令的基本语法：
+
+命令：CLI中的操作指令，用于告诉计算机要执行的任务。
+参数：命令的补充信息，用于指定命令的具体操作。
+选项：命令的可选参数，用于修改命令的行为或提供额外功能。
+
+以`create-react-app`为例子，展示一个命令 cra --help说明
+
+## 三、工作中我们常常可以实现哪些CLI
+
+例如：
+- 打开一个浏览器地址
+- 比如管理你的项目，通过模版直接拉取，方便团队共同使用
+- 提供Mock API的能力
+- 启动一个本地服务器
+- 对你的代码进行扫描分析
+- 比如webpack-cli，提供前端的各种构建能力
+- 比如你常用的一些命令，可以通过CLI来转化成你习惯的缩写，这样，只需要执行对应的命令或命令组合就可以方便使用了
+- 前端开发中的各种CLI，比如`create-react-app`，可以通过命令行定制模版项目，选择js/ts，单元测试框架，npm或是yarn等
 - 管理项目模版
 - 启动本地服务
 - 生成模版文件
 - 对代码进行格式化
+- 比如管理你的项目，通过模版直接拉取，方便团队共同使用，一个公司内部有很多技术选型，你常用的包括很多：
+  - 1、门户网站适合的技术框架
+  - 2、单页面应用`React/Vue`
+  - 3、产品文档
+  - 4、微服务
+  - 5、JS-SDK
 
-# 四、CLI优化
+下面，我们将分成几个模块来介绍如何开发一个企业级的CLI，通过一些实战来学习CLI的开发。
 
-## 1、提取命令行配置到一个文件中
-
-启动文件`index.js`
-
-```js
-const yargs = require('yargs/yargs')
-const { hideBin } = require('yargs/helpers')
-const config = require('./config')
-
-const yargsCommand = yargs(hideBin(process.argv))
-
-config.forEach(commandConfig => {
-  const { command, descriptions, options, callback } = commandConfig
-  yargsCommand.command(
-    command,
-    descriptions,
-    yargs => yargs.options(options),
-    (argv, ...rest) => {
-      callback(argv, ...rest);
-    }
-  )
-})
-  
-yargsCommand.help().argv
-```
-指令文件`config.js`
-
-```js
-const commandOptions = [
-  {
-    command: "create",
-    descriptions: "拉取一个项目模版",
-    options: {
-      name: {
-        alias: "n",
-        type: "string",
-        require: true,
-        describe: "项目名称",
-      },
-    },
-    callback: async (argv) => {
-      create({name: argv.name})
-    }
-}]
-```
-提取配置，就很清晰了
-
-## 2、配置ESLint和Prettier，之前专门写了自动化检查代码的文章。
-
-[ 前端工程化：Prettier+ESLint+lint-staged+commitlint+Hooks+CI 自动化配置处理](https://juejin.cn/post/7074893218034384927)
-
-## 3、提取脚本生成使用文档
-
-上一步我们对配置进行了提取，接着根据配置生成使用文档，如下
-
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1159ef7974cd43ac86808c797145ea69~tplv-k3u1fbpfcp-watermark.image?)
-
-**使用方法**
-
-```
-yarn add json2md@1.12.0 -D
-```
-
-```js
-const json2md = require("json2md")
-
-// 按json2md需要的数据格式组合
-const data = json2md([
-    { h1: "JSON To Markdown" }
-  , { blockquote: "A JSON to Markdown converter." }
-]))
-
-// 写入Readme.md文档
-fs.writeFile(path.join(__dirname, "../Readme.md"), json2md(data), (err) => {
-  if (err) throw err;
-  console.log("update docs success");
-});
-```

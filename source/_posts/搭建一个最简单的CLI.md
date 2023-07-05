@@ -1,8 +1,10 @@
 ---
 layout: post
-title: 搭建一个最简单的CLI
+title: 二、搭建一个最简单的CLI
 date: 2023-06-30 18:52:07
 tags: CLI
+categories:
+  - CLI
 ---
 
 # 二、搭建一个最简单的CLI
@@ -69,6 +71,87 @@ yargs(hideBin(process.argv))
 ![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d59ebf089874208a7218d30aedb5a8a~tplv-k3u1fbpfcp-watermark.image?)
 
 这里get就是定义的指令，url是指令下的key值，用--url输入，alias就是别名，用-u表示，后面跟要输入的参数。
+
+# 四、CLI优化
+
+## 1、提取命令行配置到一个文件中
+
+启动文件`index.js`
+
+```js
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
+const config = require('./config')
+
+const yargsCommand = yargs(hideBin(process.argv))
+
+config.forEach(commandConfig => {
+  const { command, descriptions, options, callback } = commandConfig
+  yargsCommand.command(
+    command,
+    descriptions,
+    yargs => yargs.options(options),
+    (argv, ...rest) => {
+      callback(argv, ...rest);
+    }
+  )
+})
+  
+yargsCommand.help().argv
+```
+指令文件`config.js`
+
+```js
+const commandOptions = [
+  {
+    command: "create",
+    descriptions: "拉取一个项目模版",
+    options: {
+      name: {
+        alias: "n",
+        type: "string",
+        require: true,
+        describe: "项目名称",
+      },
+    },
+    callback: async (argv) => {
+      create({name: argv.name})
+    }
+}]
+```
+提取配置，就很清晰了
+
+## 2、配置ESLint和Prettier，之前专门写了自动化检查代码的文章。
+
+[ 前端工程化：Prettier+ESLint+lint-staged+commitlint+Hooks+CI 自动化配置处理](https://juejin.cn/post/7074893218034384927)
+
+## 3、提取脚本生成使用文档
+
+上一步我们对配置进行了提取，接着根据配置生成使用文档，如下
+
+![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1159ef7974cd43ac86808c797145ea69~tplv-k3u1fbpfcp-watermark.image?)
+
+**使用方法**
+
+```
+yarn add json2md@1.12.0 -D
+```
+
+```js
+const json2md = require("json2md")
+
+// 按json2md需要的数据格式组合
+const data = json2md([
+    { h1: "JSON To Markdown" }
+  , { blockquote: "A JSON to Markdown converter." }
+]))
+
+// 写入Readme.md文档
+fs.writeFile(path.join(__dirname, "../Readme.md"), json2md(data), (err) => {
+  if (err) throw err;
+  console.log("update docs success");
+});
+```
 
 ## 3、npm发布
 
