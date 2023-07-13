@@ -1,61 +1,145 @@
 ---
 layout: post
-title: CLI启动API模拟接口服务
+title: 实战 - 通过CLI实现API模拟接口服务
 date: 2023-06-30 18:55:28
 tags: CLI
 categories:
   - CLI
 ---
 
-# 六、通过CLI启动API模拟接口服务
+## 一、前言
 
-> 前端在开发的过程中，总会遇到后端接口无法按时提供的情况，这种情况下有很多解决方案，常见的通过客户端生成模拟api，在项目中引入Mock。
+> 这个章节我们实战学习，如何通过CLI来进行完成实现API模拟接口的服务
 
-这里我们通过CLI来实现一个更加简单好用的模拟方案
+前端在开发的过程中，总会遇到后端接口无法按时提供的情况，这种情况下有很多解决方案，常见的通过客户端生成模拟api，在项目中引入Mock，配置反向代理模拟API服务。
 
-## 1、方案原理
+在实际使用过程中，重复的工作比较繁琐，我们如何将这个过程简化出来呢？CLI就起到了它的作用。
 
-通过CLI启动一个或多个服务器，通过Express做路由转发本地的JSON文件
+## 二、方案原理
 
-## 2、命令配置
+分析可以了解，我们不需要复杂的API服务，只需要可以将前端服务串联起来的API就可以满足，基于此，我们可以通过CLI启动一个或多个静态文件服务器，读取本地写好的API返回数据，然后转化成JSON通过接口返回。
 
-首先我们配置mock命令，设定参数`type`、`port`、`create`分别代表API类型、启动Http服务器端口号，默认9000，`create`是否自动生成接口数据JSON文件。
+TODO: 插件化这一步：在这个基础上，我们甚至可以将JSON文件通过后端的Swagger来生成，这样连模拟的JSON数据都不用写了
+
+- 1、启动Http服务
+- 2、通过请求参数匹配对应的模拟数据
+- 3、模拟数据支持Mockjs规则
+- 4、提供其他配置项
+
+**说明**
+- **源码项目如下：**
+- **项目中使用到的插件不再展示写，具体可以Clone项目cli-utils来跑一下看看各个插件的效果或者到npm官方查看**
+## 三、项目实战
+
+### 1、配置命令参数
+
+首先我们配置mock命令，设定参数
+`type`: 分别代表API类型，这里写一下Restful风格的实现思路
+`port`: 服务启动的端口
+`timeout`: 这是接口延时返回
+`customPath`: 设置Mock数据的存放地址
+`withoutOpenBrowser`: 默认打开浏览器
+
+具体实现如下：
 
 ```js
+const mock = require("./command/mock")
 {
-    command: "mock",
-    descriptions: "启动一个本地服务，模拟返回接口数据",
+    command: 'mock',
+    description: 'Start a local server to mock returning API data.',
     options: {
       type: {
-        alias: "t",
-        type: "string",
-        default: "action",
-        describe: "选择API类型",
-        choices: ['action', 'restful']
+        type: 'string',
+        default: '',
+        describe: 'Choosing an API style',
+        choices: ['', 'restful', 'action'],
       },
       port: {
-        alias: "P",
-        type: "number",
+        type: 'number',
         default: 9000,
-        describe: "选择启动的端口号",
+        describe: 'Choosing a port number for startup',
       },
-      create: {
-        alias: "c",
-        type: "boolean",
-        default: false,
-        describe: "如果mock目录不存在是否自动创建，默认不自动创建"
-      },
+      timeout: {...},
+      customPath: {...},
+      headers: {...},
+      withoutOpenBrowser: {...},
     },
     callback: async (argv) => {
       mock({
-        ...argv
-      })
+        ...argv,
+      });
     }
- ```
+}
+```
+然后通过`yargs`插件将这些配置传入，执行指令即可在mock函数中取得。
 
-## 3、Http服务处理
+### 2、检查、生成Mock数据
 
-### 1、启动express服务器，配置参数解析和跨域设置，并获取mock数据的目录，启动Http服务器
+用户首次使用一般不会自己新建JSON数据，所以要直接生成一份，供使用方快速上手。
+在调用的时候也要校验下对应的JSON数据是否存在，如果不存在提示用户新建。
+
+具体的实现过程：
+
+**先写一份预置的JSON数据，用来在用户初次使用的时候生成对应的JSON文件, 命名：restfulRes.json**
+
+```json
+{
+  "get": {
+    "v1/user": {
+      "RetCode": 0,
+      "Message": "success",
+      "Data": [
+        {
+          "Id": 1,
+          "UserName": "name"
+        }
+      ]
+    }
+  },
+  "post": {
+    "v1/create": {
+      "RetCode": 0,
+      "Message": "success",
+      "Data": ""
+    }
+  }
+}
+```
+
+根据`restfulRes.json`为用户生成对应的json文件，作为API的数据源
+
+这里生成的逻辑是，在`mock/restful/get`目录下，以请求路径命名的json文件（以短横线连接）
+
+```js
+function checkAPIPath(filePath) {
+  // 显示loading效果
+  const spinner = ora('Generating mock data...').start();
+  try {
+    // 读取预置的JSON文件，循环在用户的运行CLI指令的目录下生成Mock文件，并包含JSON数据
+    const data = readJson(path.join(__dirname, 'restfulRes.json'));
+    Object.keys(data).forEach((key) => {
+      fs.mkdirSync(`${filePath}/${key}`, { recursive: true });
+      Object.keys(data[key]).forEach((api) => {
+        const apiName = api.split('/').join('-');
+        let dataJson = JSON.stringify(data[key][api], '', '\t');
+        fs.writeFileSync(`${filePath}/${key}/${apiName}.json`, dataJson);
+      });
+    });
+    spinner.succeed('Generate mock data is success');
+  } catch (err) {
+    logger.error(err.message);
+    spinner.fail(`There is an error: ${err.message}`);
+  }
+}
+```
+TODO: 截图指令运行的过程
+
+TODO: 截图展示生成的Mock数据
+
+### 3、启动Http服务器
+
+启动express服务器，配置参数解析和跨域设置，并获取mock数据的目录，启动Http服务器
+
 ```js
 const app = express()
 app.use(bodyParser.json({limit: '50mb'}))
@@ -70,94 +154,56 @@ app.all('*', (req, res, next) => {
     next();
 });
 
-const filePath = path.join(process.cwd(), `./mock/`)
-
-app.listen(port, () => console.log(`Mock api listening on port ${port}!`));
+// 接收http请求，处理请求地址为mock文件地址，匹配mock目录下的文件
+function generateApi(app, filePath) {
+  app.all('*', async (req, res) => {
+    const method = req.method.toLowerCase();
+    const apiName = req.url.substr(1).split('/').join('-');
+    const file = `${filePath}/${method}/${apiName}.json`;
+    fs.readFile(file, 'utf-8', function (err, data) {
+      if (err) {
+        res.send(env.notFoundResponse);
+      } else {
+        res.send(JSON.parse(data));
+      }
+    });
+  });
+}
 ```
 
-### 2、如果是Action类型的API
+### 4、使用CLI
 
-比如请求url为：
+启动CLI
+
+`node index.js`
+
+调用接口
+
+修改配置再次调用接口
+### 5、CLI优化
+
+- 引入mockjs
+
+为了让我们返回的API接口更加接近于真实数据，我们引入mockjs来做数据的过滤
+
+在CLI中引入`yarn add mockjs`，然后修改代码
+
 ```js
-http://localhost:9000/acl
-```
-请求体为：
-```json
-{
-    Action: "GetUsers"
-}
-```
-此时在CLI执行的目录，新建`mock/acl/GetUsers.json`
+const mockjs = require('mockjs');
 
-GetUsers.json内容为返回的json数据
-```json
-{
-    "RetCode": 0,
-    "Message": "this is error",
-    "Data": []
-}
+res.send(Mock.mock(JSON.parse(data)));
 ```
-然后通过`fs`模块读取json文件的数据，直接返回模拟的数据，因为是实时读取的，所以更新json数据不需要重启服务。主要逻辑如下
-```js
-app.post('*', async(req, res) => {
-    const key = req.params[0].substring(1)
-    const { Action } = req.body
-    const file = `${filePath}${key}/${Action}.json`;
-    fs.readFile(file, 'utf-8', function(err, data) {
-        if (err) {
-            res.send(NotFoundResponse);
-        } else {
-            res.send(data);
-        }
-    })
-})
-```
-### 3、如果是Restful类型的API
+修改mock下的json数据
 
-比如请求url为：
-```js
-http://localhost:9000/acl/users
-```
-post请求体为：
 ```json
 {
-    limit: 10
-}
-```
-此时在CLI执行的目录，新建`mock/acl/users/post.json`
-
-post.json内容为返回的json数据
-```json
-{
-    "RetCode": 0,
-    "Message": "get users",
-    "Data": []
+  "Data": "@name"
 }
 ```
 
-如果是get请求，只需要添加`get.json`就可以了。
+再次启动CLI，我们发现接口数据每次都会变化
 
-然后同样通过`fs`读取对应的json数据
-
-```
-app.all("*", async(req, res) => {
-    const key = req.params[0]
-    const method = req.method
-    const file =`${filePath}${key}/${method}.json`
-    console.log("file", file)
-    fs.readFile(file, 'utf-8', function(err, data) {
-        if (err) {
-            res.send(NotFoundResponse);
-        } else {
-            res.send(data);
-        }
-    })
-})
-```
-
-这样就完成了CLI启动一个模拟的http服务，用起来很方便，并且可以支持直接在项目中使用。
-
-具体可以试试看[u-admin-cli](https://www.npmjs.com/package/u-admin-cli)
+## 四、总结
 
 > 对于大部分mock来说，复杂的配置是不需要的，这里仅仅是用了固定的json数据，我觉得就够用了，当然还可以自行处理数据，引入Mock规则，自行定义生成数据类型等
 
