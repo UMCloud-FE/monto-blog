@@ -202,6 +202,16 @@ yargs.command(
 );
 ```
 
+如果用户想要自定义，我们提供配置项 config：
+
+```
+monto-dev-cli config git@gitee.com:monto_1/cli-tepmlate.git
+```
+
+在项目里检测自定义配置：
+
+？TODO
+
 ## 3、下载逻辑
 
 1. 通过参数获取分支

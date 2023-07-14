@@ -7,9 +7,12 @@ categories:
   - CLI
 ---
 
-# 二、搭建一个最简单的CLI
-
 我们先搭建一个最简单的CLI来体验下，然后逐步实现复杂点的功能。
+
+## 1、搭建CLI之前需要先熟悉的几个插件
+
+### yargs
+
 
 ## 1、新建项目
 
@@ -31,6 +34,7 @@ yarn add yargs
 ```
 .command(cmd, desc, [builder], [handler])
 ```
+
 ## 3、CLI命令配置
 
 下面的配置说明：
@@ -71,6 +75,9 @@ yargs(hideBin(process.argv))
 ![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d59ebf089874208a7218d30aedb5a8a~tplv-k3u1fbpfcp-watermark.image?)
 
 这里get就是定义的指令，url是指令下的key值，用--url输入，alias就是别名，用-u表示，后面跟要输入的参数。
+
+
+
 
 # 四、CLI优化
 
