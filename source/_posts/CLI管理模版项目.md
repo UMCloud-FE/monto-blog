@@ -9,53 +9,67 @@ categories:
 
 # 五、CLI管理模版项目
 
+随着前端开发业务的增多，重复造轮子的情况屡次出现，现提供“云组件”功能：用户上传写好的组件到远程仓库，在本地开发的时候，通过 cli 按照名称拉取组件模板到本地，
+
 ## 1、配置下载命令
 
+我们的模板应该能支持这几种功能：
 
-下面展示了全部的可选参数：
+1. 前端框架选择
+2. 不同UI库选择
+3. 不同css预编译器选择
+4. 支持用户自定义模板仓库的功能
+
+下面展示了命令配置的全部可选参数：
 
 ```js
-{
-    command: "generate [type] [component] [config]",
-    alias: 'g',
-    descriptions: "生成模板组件",
-    positionals: [
-      {
-        key: 'type',
-        payload: {
-          describe: 'Frame type',
-          type: 'string',
-          choices: ['react', 'vue', 'angular'],
-        }
-      },
-      {
-        key: 'component',
-        payload: {
-          describe: 'Component name',
-          type: 'string',
-          choices: ['mui-less-v5/list'，'antd-less-v5/list'],
-        }
-      }
-    ],
-    options: {
-      type: {
-        alias: "t",
-        type: "string",
-        require: true,
-        describe: '输入想要生成的前端框架类型',
-        describeEN: 'Frame type you want to generate',
-      },
-      conponent: {
-        alias: 'c',
-        type: 'array',
-        require: true,
-        describe: '输入想要生成的组件名称',
-        describeEN: 'Component name you want to generate',
-      },
-    },
-    callback: async (argv) => {
-      templateGenerate(argv);
+// 默认的配置项
+const positionals = [
+  {
+    key: 'type',
+    payload: {
+      describe: 'Frame type',
+      type: 'string',
+      choices: ['react', 'vue', 'angular'],
     }
+  },
+  {
+    key: 'component',
+    payload: {
+      describe: 'Component name',
+      type: 'string',
+      choices: ['mui-less-v5/list'，'antd-less-v5/list'],
+    }
+  }
+];
+
+const options = {
+  type: {
+    alias: "t",
+    type: "string",
+    require: true,
+    describe: '输入想要生成的前端框架类型',
+    describeEN: 'Frame type you want to generate',
+  },
+  conponent: {
+    alias: 'c',
+    type: 'array',
+    require: true,
+    describe: '输入想要生成的组件名称',
+    describeEN: 'Component name you want to generate',
+  },
+};
+
+// config.js
+{
+  command: "generate [type] [component]",
+  alias: 'g',
+  descriptions: "生成模板组件",
+  positionals: positionals,
+  options: options,
+  callback: async (argv) => {
+    templateGenerate(argv);
+  }
 }
 ```
 参数说明：
@@ -109,6 +123,83 @@ const { type, component } = argv.argv;
 
 ```
 git@gitee.com:monto_1/cli-tepmlate.git
+```
+
+如果用户想要自定义，我们提供两种自定义配置项的方式。
+
+1. 外挂配置
+
+用户在启动命令行的目录下放置配置文件。
+
+2. 用户通过 cli 指令设置自定义配置文件 url（待开发）
+```
+monto-dev-cli config git@gitee.com:monto_1/cli-tepmlate.git
+```
+
+配置文件格式如下：
+
+```js
+export const config = {
+  templete: {
+    remote: 'git@gitee.com:monto_1/cli-tepmlate.git',
+    list: {
+      react: ['antd-less-v5/list'],
+      vue: []
+    },
+  },
+  mock: {
+    proxyApiUrl: ''
+  }
+}
+```
+请统一命名为 `monto.config.js`, 我们会在项目里检测自定义配置：
+
+```js
+// index.js
+import { config } from './monto.config.js';
+
+yargs.command(
+  command,
+  description,
+  (yargs) => {
+    // 1. 本地目录
+    if (config && config.templete) {
+      const customPositionals = [
+        {
+          key: 'type',
+          payload: {
+            describe: 'Frame type',
+            type: 'string',
+            choices: Object.keys(config.templete.list).sort()
+          },
+        }
+      ];
+      // {
+      //   key: 'component',
+      //   payload: {
+      //     describe: 'Component name',
+      //     type: 'string',
+      //     // TODO: 需要根据上一次指令选择的结构动态指定下一次选项
+      //     choices: ['mui-less-v5/list'，'antd-less-v5/list'],
+      //   }
+      // }
+      return getPositionalChaining(customPositionals[Symbol.iterator]());
+    }
+
+    // 默认的本地配置 
+    return getPositionalChaining(positionals[Symbol.iterator]()).options(options)
+
+    // 2. 远程 TODO
+    // return fetch('配置的文件地址')
+  },
+  (argv) => {
+    // TODO: 嵌套式读取参数
+  },
+  (argv = {}) => {
+    if (!argv) process.exit(0);
+    callback({ ...argv });
+  },
+);
 ```
 
 如果用户想要自定义，我们提供配置项 config：
