@@ -244,3 +244,32 @@ inquirer.prompt(questions).then((answers) => {
 ```
 
 我们还可以有更多的扩展，比如选择项太多该怎么提供模糊搜索功能等，这些牵扯到具体的业务封装，我们在之后的文章中进行讲解。
+
+# execa
+
+execa是一个用于在 Node.js 环境中执行外部进程的轻量级库。让开发者可以方便地执行命令行命令，并获取命令的输出结果、错误信息、退出码等信息。execa 的设计目标是为了取代 Node.js 内置的 child_process 模块，提供更加易用和可靠的进程管理功能。
+
+你可以使用它执行shell命令：
+
+```js
+execa('ls').then((result) => {
+  console.log(result.stdout);
+}).catch((error) => {
+  console.error(error);
+});
+```
+
+也可以操作npm项目：
+
+```js
+execa('yarn', ['add', 'vue'], {
+  cwd: process.cwd(), // 设置命令执行的当前工作目录
+  env: { NODE_ENV: 'development' }, // 设置环境变量
+}).then((result) => {
+  console.log(result.stdout);
+}).catch((error) => {
+  console.error(error);
+});
+```
+
+当然了，也可以进行监听进程、 git管理等操作，使用比较广泛。
