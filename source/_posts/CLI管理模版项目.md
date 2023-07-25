@@ -53,20 +53,23 @@ template: {
 
 ```js
 template: {
+  remoteRegistry: '你的远程仓库',
+  generateDirectory: '你的放置目录',
   types: ['你的框架类型1', '你的框架类型2'],  // 你的可选框架列表
   components: {  // 你的可选组件列表
     "你的框架类型1": ['你的组件名称1', '你的组件名称2'],
   },
-  remoteRegistry: '你的远程仓库',
-  generateDirectory: '你的放置目录',
 }
 ```
 
 上面参数都为可选，没有配置则默认使用系统默认。
 
-接下来在 lib/config.js 里写入合并的逻辑：
+接下来写入合并的逻辑：
 
 ```js
+// lib/config.js
+
+// 参数介绍
 // defaultConfigName: 'monto.config.default.js',
 // configName: 'monto.config.js',
 const defaultConfig = require(path.join(__dirname, '../', defaultConfigName));
@@ -99,14 +102,12 @@ const commandConfigs = [
       type: {
         alias: 't',
         type: 'string',
-        // demandOption: true,
         describe: '输入想要生成的前端框架类型',
         describeEN: 'Frame type you want to generate',
       },
       component: {
         alias: 'c',
         type: 'string',
-        // demandOption: true,
         describe: '输入想要生成的组件名称',
         describeEN: 'Component name you want to generate',
       },
@@ -115,7 +116,7 @@ const commandConfigs = [
       templateGenerate(argv);
     },
   },
-  ...
+  // ...
 ]
 ```
 
@@ -135,12 +136,13 @@ const commandConfigs = [
 ```js
 // templateGenerate
 const { template } = config(); // lib/config.js 拿到的处理后的配置参数
-const { types, components } = { ...template };
+const { types, components, generateDirectory, remoteRegistry, } = { ...template };
 
 // 如果参数完整，则直接进入生成函数。
 if (argv.type && argv.component) {
   await generate({
-    ...template,
+    generateDirectory,
+    remoteRegistry,
     ...argv,
   });
   return;
@@ -149,32 +151,33 @@ if (argv.type && argv.component) {
 
 上面的分支适合如下指令： `monto-dev-cli g -t react -c antd-less-v5/list`.
 
-另一种情况，我直接输入 `monto-dev-cli g`，系统自然不知道你想要生成那个组件，但是你有配置文件啊，通过读出 types, components 这两个可选项，可以你提供一个选择界面。交互界面我们使用 inquirer 库来实现，由于我们的选择有级联关系（先选择type，在选择component），我们使用 rxjs 的管道流配置：
+另一种情况，我直接输入 `monto-dev-cli g`，系统自然不知道你想要生成那个组件，但是你有配置文件啊，通过读出 types, components 这两个可选项，可以你提供一个选择界面。交互界面我们使用 inquirer 库来实现，由于我们的选择有级联关系（先选择type，在选择component），我们使用一个数组来配置：
 
 ```js
-const Rx = require('rxjs');
+const getComponentOptions = () => {
+  return types.map((type) => {
+    return {
+      name: 'component',
+      type: 'autocomplete',
+      message: 'Please select the component: ',
+      source: searchOptions(components[type]),
+      when: (answers) => answers.type === type,
+    };
+  });
+};
 
-const prompts = new Rx.Subject();
-
-inquirer.prompt(prompts).ui.process.subscribe(
-  async (result) => handleSelect(result),
-  () => {
-    logger.output.error(
-      'Incorrect configuration for parameter types or components, please check! ',
-    );
-    process.exit(1);
+const questions = [
+  {
+    name: 'type',
+    type: 'autocomplete',
+    message: 'Please select the framework: ',
+    source: searchOptions(types),
   },
-  () => {},
-);
-
-prompts.next({
-  name: 'type',
-  type: 'autocomplete',
-  message: 'Please select the framework you want: ',
-  source: searchOptions(types),
-});
+  ...getComponentOptions(),
+];
 ```
-上面的代码，我们新建了一个prompt的管道流给 prompts，prompts调用next方法往管道里放一个数据，推送一个对象，然后在subscribe里订阅，使用处理函数handleSelect来梳理。你可能会好奇，为啥我的 type不是list呢？因为这里如果列表太多的话，移动键盘上下键选择会比较麻烦，我这里支持模糊搜索，并配置了自定义的属性 autocomplete：
+上面的代码，我们使用 when 关键字来判断，若选择了 type，并且选择的 type 是对应 component 的 type，就显示选择 component 的选项。你可能会好奇，为啥我的配置项的 type 不是list呢？因为这里如果列表太多的话，移动键盘上下键选择会比较麻烦，我这里使用 inquirer-autocomplete-prompt库来支持模糊搜索，并配置了一个自定义的属性 autocomplete：
+
 
 ```js
 const autocomplete = require('inquirer-autocomplete-prompt');
@@ -182,43 +185,24 @@ const autocomplete = require('inquirer-autocomplete-prompt');
 inquirer.registerPrompt('autocomplete', autocomplete);
 
 const searchOptions = (options) => (answers, input) => {
-    input = input || '';
-    return new Promise((resolve) => {
-      const filteredOptions = options.filter((option) =>
-        // 忽略大小写
-        option.toLowerCase().includes(input.toLowerCase()),
-      );
-      resolve(filteredOptions);
-    });
-  };
+  return new Promise((resolve) => {
+    const filteredOptions = options.filter((option) =>
+      // 忽略大小写
+      option.toLowerCase().includes(input.toLowerCase()),
+    );
+    resolve(filteredOptions);
+  });
+};
 ```
 
-如此便清楚了，选择选项后拿到的数据 result 结构为 ```{ name: 'type', answer: 'vue' }```，根据这个结构，我们来写handleSelect：
+如此便清楚了，选择选项后拿到的数据 result 结构为 ```{ type: 'react', component: 'mui-less-v5/list/prod' }```，根据这个结构，我们直接调用生成函数即可：
 
 ```js
-// handleSelect
-async function handleSelect(result) {
-  if (result.name === 'type') {
-    argv.type = result.answer;
-    prompts.next({
-      name: 'component',
-      type: 'autocomplete',
-      message: 'Please select the component: ',
-      source: searchOptions(components[argv.type]),
-    });
-  }
-
-  if (result.name === 'component') {
-    argv.component = result.answer;
-
-    await generate({
-      ...template,
-      ...argv,
-    });
-
-    prompts.complete();
-  }
-}
+await generate({
+  generateDirectory,
+  remoteRegistry,
+  ...answers,
+});
 ```
 上面的功能，判断选择类型是 type 时，收集参数到argv，并推送一个选择 component的prompt；如果已经选择了component，则调用generate组件进行下一步生成。
 
@@ -233,9 +217,17 @@ async function handleSelect(result) {
 }
 ```
 
-接下来就开始着手拉取模板仓库了！
+接下来将重点放在 generate 函数里，实现拉取模板仓库！
 
 ## 4. 根据配置拉取模板仓库到本地
+
+generate 函数接受四个参数：
+
+```js
+const { type, component, generateDirectory, remoteRegistry } = argv;
+```
+
+针对现type, component和remoteRegistry可以拼接出git拉取的仓库路径。
 
 我们针对不同的功能组件，设立了不同的模板仓库分支：
 
@@ -248,15 +240,17 @@ async function handleSelect(result) {
 ```js
 const branchName = `${argv.type}/${argv.component}`
 ```
+上面的代码，兼容了反斜杠路径模式，并且自动处理了不规范的路径写法，最后的 path.resolve 用户获取真实路径，如果用户传的目录是一个相对目录，resolve可以拿到当前 cwd 的目录，如果传了绝对路径则使用用户的路径。这对以规范和格式化输出比较有帮助。
 
-拉取模板前还需要注意处理一下放置目录：
+接下来拉取仓库到目录：
+
+拉取模板前还需要注意处理一下放置目录的规范化。需要兼容反斜杠路径模式，并且处理不规范的路径写法，如果用户传的目录是一个相对目录，需要使用path.resolve拿到当前 cwd 的目录，如果传了绝对路径则使用用户的路径：
 
 ```js
 const normalizedDirectoryPath = path.resolve(
   path.normalize(generateDirectory).replace(/\\/g, '/'),
 );
 ```
-上面的代码，兼容了反斜杠路径模式，并且自动处理了不规范的路径写法，最后的 path.resolve 用户获取真实路径，如果用户传的目录是一个相对目录，resolve可以拿到当前 cwd 的目录，如果传了绝对路径则使用用户的路径。这对以规范和格式化输出比较有帮助。
 
 接下来拉取仓库到目录：
 
