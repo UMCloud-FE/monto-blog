@@ -204,6 +204,7 @@ await generate({
   ...answers,
 });
 ```
+上面的功能，判断选择类型是 type 时，收集参数到argv，并推送一个选择 component的prompt；如果已经选择了component，则调用generate组件进行下一步生成。
 
 至此，模板参数的收集和处理工作已经完成了，我们最终拿到了类似如下结构的数据：
 
@@ -239,6 +240,9 @@ const { type, component, generateDirectory, remoteRegistry } = argv;
 ```js
 const branchName = `${argv.type}/${argv.component}`
 ```
+上面的代码，兼容了反斜杠路径模式，并且自动处理了不规范的路径写法，最后的 path.resolve 用户获取真实路径，如果用户传的目录是一个相对目录，resolve可以拿到当前 cwd 的目录，如果传了绝对路径则使用用户的路径。这对以规范和格式化输出比较有帮助。
+
+接下来拉取仓库到目录：
 
 拉取模板前还需要注意处理一下放置目录的规范化。需要兼容反斜杠路径模式，并且处理不规范的路径写法，如果用户传的目录是一个相对目录，需要使用path.resolve拿到当前 cwd 的目录，如果传了绝对路径则使用用户的路径：
 
