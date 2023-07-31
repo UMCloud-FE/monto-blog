@@ -210,3 +210,8 @@ res.send(Mock.mock(JSON.parse(data)));
 以上就是搭建一个CLI的过程，我们从最简单的开始构建了一个基础CLI，在这个基础上进行了交互优化，然后实际开发了CLI的两个功能：
 - 1、通过CLI管理部门内的模版项目
 - 2、通过CLI启动Http服务器，模拟接口生成
+
+
+## 用户更新配置文件，如何热更新CLI
+
+## CLI引用参见commonjs和esModule配置

@@ -1,6 +1,9 @@
+package.json
+```json
 "scripts": {
   "postinstall": "node printLogo.js"
-},
+}
+```
 
 ```js
 import chalk from 'chalk';

@@ -183,3 +183,9 @@ npm login
 ![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/93366377d58f42c7af9c21dae58a6cf1~tplv-k3u1fbpfcp-watermark.image?)
 
 **cli-demo3是我们前期测试使用写的CLI，后面继续使用我正常部署的CLI：u-amin-cli，原理是一样的**
+
+## 三、CLI读取用户指令信息统一配置
+
+- exec bash
+- monto.config.js
+- default.js
