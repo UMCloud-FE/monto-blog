@@ -1,13 +1,13 @@
 ---
 layout: post
-title: CLI管理模版项目
+title: 六、使用CLI实现前端云组件模板管理功能（实践篇）
 date: 2023-06-30 18:54:31
 tags: CLI
 categories:
   - CLI
 ---
 
-# 五、CLI管理模版项目
+# 六、使用CLI实现前端云组件模板管理功能（实践篇）
 
 随着前端开发业务的增多，重复造轮子的情况屡次出现，我们可以将封装好的组件用单独的代码仓库来维护，并提供 cli 来触达组件：用户上传写好的组件到远程仓库，在本地开发的时候，通过 cli 按照名称拉取组件模板到本地.
 
@@ -39,7 +39,7 @@ categories:
 ```js
 // 默认的配置项 (monto.config.default.js)
 template: {
-  generateDirectory: `${process.cwd()}/generate-component`,
+  generateDirectory: 'generate-component',
   remoteRegistry: 'git@gitee.com:monto_1/cli-template.git',
   types: ['react', 'vue'],
   components: {
@@ -62,7 +62,7 @@ template: {
 }
 ```
 
-上面参数都为可选，没有配置则默认使用系统默认。
+上面参数都为可选，没有配置则默认使用系统默认。切记，`你的放置目录` 最好配置为一个相对目录，因为在拼接路径时，会用 path.resolve 获取指令输入（cwd）位置并拼接绝对路径，这样更灵活；但配置绝对路径也不是不可以，比如 `/User/user/Documents/my-dir`，这时你就要控制好权限问题了，一不小心就会出现操作根目录文件夹，提示只读系统的问题！
 
 接下来写入合并的逻辑：
 
