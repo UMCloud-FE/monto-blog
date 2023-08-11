@@ -39,7 +39,7 @@ categories:
 ```js
 // 默认的配置项 (monto.config.default.js)
 template: {
-  generateDirectory: `${process.cwd()}/generate-component`,
+  generateDirectory: 'generate-component',
   remoteRegistry: 'git@gitee.com:monto_1/cli-template.git',
   types: ['react', 'vue'],
   components: {
@@ -62,7 +62,7 @@ template: {
 }
 ```
 
-上面参数都为可选，没有配置则默认使用系统默认。
+上面参数都为可选，没有配置则默认使用系统默认。切记，`你的放置目录` 最好配置为一个相对目录，因为在拼接路径时，会用 path.resolve 获取指令输入（cwd）位置并拼接绝对路径，这样更灵活；但配置绝对路径也不是不可以，比如 `/User/user/Documents/my-dir`，这时你就要控制好权限问题了，一不小心就会出现操作根目录文件夹，提示只读系统的问题！
 
 接下来写入合并的逻辑：
 

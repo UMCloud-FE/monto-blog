@@ -15,13 +15,13 @@ categories:
 
 [yargs](https://yargs.js.org/)，按照官网的定义，它是一个帮助你在命令行工具中解析参数并生成优雅界面的工具。我们也知道，通过上一讲我们知道，不用任何框架，使用 `process.argv` 也可以获取请求参数，所以可以这样理解，`yargs` 是一个基于命令行工具的一个框架（或者库），其规范了参数获取、命令配置等，使得命令行工具的开发变得有法可循。
 
-## 安装
+#### 安装
 
 ```shell
 $ npm install --save yargs
 ```
 
-## 使用
+#### 使用
 
 我们从官网首页提供的例子下手，讲解一下他的使用流程：
 
@@ -88,7 +88,7 @@ yargs(hideBin(process.argv))
   // .scriptName('cli-test')
   .argv
 ```
-上面 usage 用于配置帮助菜单中打印自定义提示，argv 表示可返回上面配置的参数，一般写在最后，要想有输出参数功能，在实例化时就要传入 node 参数：`hideBin(process.argv)`，使用 hideBin 包裹一下，表示这里不需要 process.argv 前两项路径参数（可执行文件路径和脚本文件路径），以便得到更简洁的参数对象；
+上面 usage 用于配置帮助菜单中打印自定义提示，argv 表示可返回上面配置的参数，一般写在最后，要想有输出参数功能，在实例化时就要传入 node 参数：`hideBin(process.argv)`，使用 hideBin 包裹一下，表示这里不需要 process.argv 前两项路径参数（可执行文件路径和脚本文件路径），相当于执行了 `process.argv.slice(2)`，以便得到更简洁的参数对象，目前版本的 yargs 可以直接解析；
 
 我们直接使用node运行：
 
@@ -165,7 +165,7 @@ start the application server
   --help     显示帮助信息                                                         [布尔]
   --version  显示版本号                                                          [布尔]
 ```
-positional 方法，通过获取尖括号里的对应参数进行匹配，并输出对应提示和参数类型。
+positional 方法，往往与尖括号和方括号参数同步出现，其通过获取括号里的对应参数进行匹配，并输出对应提示和参数类型。
 
 上面的例子可以看到，usage 可以接收参数，所以可以用于默认命令的配置。但是一般不建议使用 usage 来配置命令，他的功能应该局限于配置提示。如果你并列写了两个 usage，则会被认定为配置了指令，这会造成错乱：
 
@@ -211,13 +211,28 @@ the type of your application
 
 command 是用于配置命令的方法，使用格式如下：
 
-```shell
-# 声明
-.command('命令名称', '描述', [参数1], [参数2])
+```js
+// 声明方式1 - 提示参数
+.command('命令名称 <必选参数> [可选参数]', '描述', [参数1], [参数2])
 
+// 声明方式2 - 别名
+.command(['命令名称', '别名'], '描述', [参数1], [参数2])
+```
+
+```shell
 # 使用
 cli名称 命令名称 [参数]
 ```
+
+如果配置了必选参数，比如： `.command('login <name>')`，可以这样请求：
+
+```js
+cli名称 login 呀哈哈
+```
+
+如果参数配置在后边的属性回调中 (比如使用 .option 方法配置)，就需要使用双横线来表示参数了，我们下面会讲到。
+
+> P.S. 注意，这里的必选参数是一个提示规范，yargs只会校验存在与否，若需要更高级的校验，还是需要用户在回调中自定义校验规则。
 
 一个模拟 HTTP请求的例子：
 
@@ -226,7 +241,8 @@ yargs(hideBin(process.argv))
   .command('get', 'make a get HTTP request', {
     url: {
       alias: 'u',
-      default: 'localhost:3000/'
+      default: 'localhost:3000/',
+      type: 'string'
     }
   })
   .argv
@@ -238,10 +254,11 @@ yargs(hideBin(process.argv))
   yargs.js get  make a get HTTP request
 
 选项：
-  --help     显示帮助信息                                                         [布尔]
-  --version  显示版本号                                                          [布尔]
+  --help         显示帮助信息                                                [布尔]
+  --version      显示版本号                                                  [布尔]
+  --get-url, --ug                                                          [字符串]
 ```
-yargs 自动识别为命令，并分组提示。我们试着打印这个命令的 help ：
+yargs 自动识别为`命令`，并分组提示。我们试着打印这个命令的 help ：
 
 ```shell
 node yargs.js get --help
@@ -258,13 +275,20 @@ make a get HTTP request
       --version  显示版本号                                                      [布尔]
   -u, --url                                             [默认值: "localhost:3000/"]
 ```
-可以看到，帮助文档可以精确到具体的命令。上面第二个参数我们一般会写成一个回调，接受 yargs实例，来做一个更灵活的配置，还可以有第三个参数，也是一个回调，获取处理后的参数：
+可以看到，帮助文档可以精确到具体的命令。常用的配置参数：
+
+- alias：配置命令参数别名
+- default：参数的默认值，不填写参数时的默认取值
+- type：参数的接受类型，如果传错了，系统会自动转换为 type 的类型接受
+
+上面配置参数的对象，我们一般会写成一个回调，接受 yargs 实例，来实现更灵活的配置，还可以有第三个参数，也是一个回调，获取处理后的参数：
 
 ```js
 .command('get', 'make a get HTTP request', yargs => {
     return yargs.option('url', {
       alias: 'u',
-      default: 'localhost:3000/'
+      default: 'localhost:3000/',
+      type: 'string'
     })
   },
   argv => {
@@ -272,8 +296,9 @@ make a get HTTP request
   }
 )
 ```
-上面，yargs.option 用于配置指令里各个配置项的属性。我们试着执行以下这个模拟请求 HTTP 的指令看看：`node yargs.js get -u 192.168.1.1`：
+我们试着执行一下这个模拟请求 HTTP 的指令看看：`node yargs.js get -u 192.168.1.1`：
 
+打印结果：
 ```md
 {
   _: [ 'get' ],
@@ -284,7 +309,7 @@ make a get HTTP request
 ```
 可以看到输出结果，配置的get指令的参数 url简写 u 生效并接收了进来，使用 u 或者 url 都可以接受这个参数。
 
-命令还可以链式配置：
+命令还可以链式调用配置（subcommands模式）：
 
 ```js
 .command('get', 'make a get HTTP request', yargs => {
@@ -306,48 +331,14 @@ make a get HTTP request
   }
 )
 ```
-可以同时执行：`node yargs.js get -gu 192.168.1.1 post -pu localhost:3000`，结果如下：
+可以同时执行：`node yargs.js get --gu 192.168.1.1 && node yargs.js post --pu localhost:3000`，结果如下：
 
 ```md
-{
-  _: [ 'get', 'post' ],
-  g: true,
-  u: [ '192.168.1.1', 'localhost:3000' ],
-  p: true,
-  '$0': 'yargs.js'
-}
-```
-参数缩写默认是一个字母，这里多个命令同时执行时，若缩写不止一个字母，且有共同后缀（这里是 u），则会用一个数组来接收，前缀会用布尔值表示是否存在。
-
-我们将配置文件后缀改为前缀试试：gu -> ug，pu -> up:
-
-再执行指令：`node yargs.js get -ug 192.168.1.1 post -up localhost:3000`：
-
-```md
-{
-  _: [ 'get', 'post' ],
-  u: [ true, true ],
-  g: '192.168.1.1',
-  p: 'localhost:3000',
-  '$0': 'yargs.js'
-}
+{ _: [ 'get' ], gurl: '192.168.1.1', gu: '192.168.1.1', '$0': 'yargs.js' }
+{ _: [ 'post' ], purl: 'localhost:3000', pu: 'localhost:3000', '$0': 'yargs.js' }
 ```
 
-这里可以总结一下：多个命令一起执行时，若各个缩写有公共后缀，则参数会被收集在一个后缀字母做key的数组里；若各个缩写有公共前缀，则配置参数分别以各个后缀为key存放，公共前缀是一个布尔数组，表示是否有值。即公共部分放在数组里。
-
-我们这里改一下配置文件缩写为一个字母 gu -> g，pu -> p，再试试指令 `node yargs.js get -g 192.168.1.1 post -p localhost:3000`，结果如下：
-
-```md
-{
-  _: [ 'get', 'post' ],
-  g: '192.168.1.1',
-  'get-url': '192.168.1.1',
-  getUrl: '192.168.1.1',
-  p: 'localhost:3000',
-  '$0': 'yargs.js'
-}
-```
-这里的参数就会分开接收了。具体怎么配置，在项目里按照使用场景配置即可。
+> P.S. 就算是别名，不止一个字母时，也要使用 -- 哦
 
 
 同类型的命令方法还有一些，我这里汇总一下：
@@ -368,15 +359,110 @@ yargs(hideBin(process.argv)).help();
 
 但 yargs 自带有默认的帮助信息，你如果只需要默认提示即可，则无需配置。这里讲一下自定义配置 help。
 
-配置缩写：
+给帮助参数改名，改完名字后默认名字失效：
 
-```shell
+```js
 .help('h')
 
-# 使用：node yargs.js -h 
+// 命令行中使用：node yargs.js -h 
 ```
 
+定义帮助提示的说明：
 
+```js
+.help('h', '我的提示帮助')
+```
+
+打印结果：
+
+```md
+选项：
+      --version  显示版本号                                                      [布尔]
+  -h             我的提示帮助                                                     [布尔]
+```
+
+如果想要禁用 `--help` 的传参写法，可以这样：
+
+```js
+.help(false)
+```
+
+当然了，你也可以在任何能够获取到 yargs 实例的地方通过调用 API 显示当前的帮助信息：
+
+```js
+.command('post', 'make a get HTTP request', yargs => {
+  yargs.showHelp();
+})
+```
+
+> P.S. showHelp() 的打印，会终止程序并推出，一定要在程序终结之前调用。
+
+这里需注意, showHelp 必须作为 yargs 示例的调用才有意义。如果想要在指令回调里调用来打印指令的帮助信息，可建立全局对象缓存实例：
+
+```js
+let instance = null;
+
+yargs(hideBin(process.argv))
+  .command('get', 'make a get HTTP request', yargs => {
+    instance = yargs;
+    return yargs.option('url', {
+      alias: 'u',
+      type: 'string'
+    })
+  },
+  argv => {
+    instance.showHelp();
+    console.log(argv)
+  }
+)
+```
+
+当然了，yargs 的功能还有很多这里列举几个常用的配置：
+
+- version： 可配置自定义 --version 帮助信息的指令。譬如自定义缩写、版本号与打印输出内容：`.version('1.0.0', '-v, --version', 'My First CLI !!')`
+- parse：提供自定义解析参数的方法，往往与 command 结合进行使用，比如下面开饭的例子：
+
+```js
+// 给 lunch-train 命令添加一个参数 time, 并指定参数 restaurant 为 rudy's
+yargs(hideBin(process.argv))
+  .command('lunch-train <restaurant>', 'start lunch train', () => {}, function (argv) {
+    console.log(argv.restaurant, argv.time)
+  })
+  .parse("lunch-train rudy's", {time: '12:15'})
+```
+当然也可以接受第三个回调函数参数，接受形参：`.parse("lunch-train rudy's", {time: '12:15'}, (err, argv, output) => {}`，这样就可以拿到解析的结果并自定义输出了。
+
+parse 使用场景比较多，可以用来解析用户输入、配置信息或者生成帮助信息等。
+
+- alias：配置别名。比如：`.alias('version', 'V') 或者 .alias({ version: 'V'})`
+- array：告诉解析器哪些参数用数组接收，比如：`.array('books')`
+
+------
+现在我们回过头来再看看开始给出的官方案例，抄写如下：
+
+```js
+// example.js
+#!/usr/bin/env node
+import yargs from 'yargs'
+
+yargs()
+  .scriptName("pirate-parser")
+  .usage('$0 <cmd> [args]')
+  .command('hello [name]', 'welcome ter yargs!', (yargs) => {
+    yargs.positional('name', {
+      type: 'string',
+      default: 'Cambi',
+      describe: 'the name to say hello to'
+    })
+  }, function (argv) {
+    console.log('hello', argv.name, 'welcome to yargs!')
+  })
+  .help()
+  .argv
+```
+可以看到，先是配置脚本名称为 `pirate-parser`，配置了使用说明 usage，并设置一个叫做 hello 的命令，接受一个可选参数 name，使用 positional 配置占位参数的属性，最后在回调中接受输入的 name 参数并打印。
+
+是不是一目了然了！到这里 yargs 的使用我们就有一个基本的了解了。
 
 ## ora
 
