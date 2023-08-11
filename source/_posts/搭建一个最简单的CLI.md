@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 二、搭建一个最简单的CLI
+title: 搭建一个最简单的CLI
 date: 2023-06-30 18:52:07
 tags: CLI
 categories:

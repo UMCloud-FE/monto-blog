@@ -1,8 +1,10 @@
 ---
 layout: post
-title: 给CLI引入单元测试
+title: 八、给CLI引入单元测试
 date: 2023-07-27 08:48:11
 tags: CLI
+categories:
+  - CLI
 ---
 
 这一节来讲如何给CLI引入单元测试
