@@ -2,7 +2,6 @@
 layout: post
 title: 一、结识CLI（概述篇）
 date: 2023-05-30 18:49:32
-order: 0
 tags: CLI
 categories:
   - CLI
@@ -151,7 +150,6 @@ echo $PATH # windows使用 %PATH%
 有了上面的讲述，相信你对 CLI 的基本使用已经有所了解，你也应该能猜出来他能干什么了吧？
 
 我们可以这样使用，例如：
-
 - 打开一个浏览器地址
 
 ```js
