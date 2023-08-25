@@ -2,7 +2,9 @@
 layout: post
 title: npm包的发布和管理版本管理
 date: 2023-07-19 17:34:06
-tags:
+tags: CLI
+categories:
+  - CLI
 ---
 ## 一、npm 包的发布
 
